@@ -18,32 +18,35 @@ enum errors {
 };
 
 int init_socket(int port) {
-    //open socket, return socket descriptor
+    // open socket, return socket descriptor
     int server_socket = socket(PF_INET, SOCK_STREAM, 0);
     if (server_socket < 0) {
         perror("Fail: open socket");
         _exit(ERR_SOCKET);
     }
- 
-    //set socket option
+
+    // set socket option
     int socket_option = 1;
-    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &socket_option, sizeof(socket_option));
+    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR,
+        &socket_option, sizeof(socket_option));
     if (server_socket < 0) {
         perror("Fail: set socket options");
         _exit(ERR_SETSOCKETOPT);
     }
 
-    //set socket address
+    // set socket address
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
     server_address.sin_addr.s_addr = INADDR_ANY;
-    if (bind(server_socket, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
+    if (bind(server_socket,
+        (struct sockaddr *) &server_address,
+        sizeof(server_address)) < 0) {
         perror("Fail: bind socket address");
         _exit(ERR_BIND);
     }
 
-    //listen mode start
+    // listen mode start
     if (listen(server_socket, 5) < 0) {
         perror("Fail: bind socket address");
         _exit(ERR_LISTEN);
@@ -68,7 +71,7 @@ int main(int argc, char** argv) {
     socklen_t size;
     int *client_socket = malloc(client_numb * sizeof(int));
     for (int i = 0; i < client_numb; i++) {
-        client_socket[i] = accept(server_socket, 
+        client_socket[i] = accept(server_socket,
                                 (struct sockaddr *) &client_address,
                                 &size);
         printf("connected: %s %d\n", inet_ntoa(client_address.sin_addr),

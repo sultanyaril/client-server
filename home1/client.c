@@ -17,21 +17,23 @@ enum errors {
 };
 
 int init_socket(const char *ip, int port) {
-    //open socket, result is socket descriptor
+    // open socket, result is socket descriptor
     int server_socket = socket(PF_INET, SOCK_STREAM, 0);
     if (server_socket < 0) {
         perror("Fail: open socket");
         _exit(ERR_SOCKET);
     }
 
-    //prepare server address
+    // prepare server address
     struct hostent *host = gethostbyname(ip);
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
-    memcpy(&server_address.sin_addr, host -> h_addr_list[0], sizeof(server_address));
+    memcpy(&server_address.sin_addr,
+        host -> h_addr_list[0],
+        sizeof(server_address));
 
-    //connection
+    // connection
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
     sin.sin_port = htons(port);
@@ -55,7 +57,7 @@ int main(int argc, char **argv) {
     int port = atoi(argv[2]);
     int server = init_socket(ip, port);
     char ch;
-    for(ch = getchar(); ch != '.'; ch = getchar()) {
+    for (ch = getchar(); ch != '.'; ch = getchar()) {
         if (ch != '\n') {
             write(server, &ch, 1);
             printf("Send letter: ");

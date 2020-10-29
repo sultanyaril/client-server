@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -76,17 +77,31 @@ int main(int argc, char** argv) {
         printf("connected: %s %d\n", inet_ntoa(client_address.sin_addr),
                                 ntohs(client_address.sin_port));
     }
-    char ch;
     pid_t *pid = malloc(client_numb * sizeof(pid_t));
     for (int i = 0; i < client_numb; i++) {
         pid[i] = fork();
         if (pid[i] == 0) {
-            while (ch != '.') {
+            char *word = NULL;
+            do {
+                free(word);
+                word = NULL;
+                char ch;
                 read(client_socket[i], &ch, 1);
+                int j = 1;
+                for (; ch != 0; j++) {
+                    word = realloc(word, sizeof(char) * j);
+                    word[j - 1] = ch;
+                    read(client_socket[i], &ch, 1);
+                }
                 printf("%d: ", i + 1);
-                putchar(ch);
-                puts("");
-            }
+                puts(word);
+                for (int k = 0; k < client_numb; k++) {
+                    if (k != i) {
+                        write(client_socket[k], &i, 1);
+                        write(client_socket[k], word, j);
+                    }
+                }
+            } while (1);
             _exit(1);
         }
     }

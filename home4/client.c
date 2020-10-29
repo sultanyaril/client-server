@@ -44,8 +44,8 @@ int init_socket(const char *ip, int port) {
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
-    memcpy(&server_address.sin_addr,
-        host -> h_addr_list[0], sizeof(server_address));
+    memcpy(&server_address.sin_addr, host -> h_addr_list[0],
+        sizeof(server_address));
 
     // connection
     struct sockaddr_in sin;
@@ -70,16 +70,43 @@ int main(int argc, char **argv) {
     char *ip = argv[1];
     int port = atoi(argv[2]);
     int server = init_socket(ip, port);
-    char *word;
-    int size_w;
-    for (word = get_word(&size_w);
-        strcmp(word, "exit") && strcmp(word, "quit");
-        word = get_word(&size_w)) {
-            write(server, word, size_w);
-            printf("Send word: ");
-            puts(word);
-            free(word);
+    pid_t pid[2];
+    pid[0] = fork();
+    if (pid[0] == 0) {
+        char *word;
+        int size_w;
+        // for (word = get_word(&size_w);
+        // strcmp(word, "exit") && strcmp(word, "quit");
+        // word = get_word(&size_w))
+        while (1) {
+                word = get_word(&size_w);
+                write(server, word, size_w);
+                // printf("Send word: ");
+                // puts(word);
+                free(word);
+        }
     }
+    pid[1] = fork();
+    if (pid[1] == 0) {
+        char *word = NULL;
+        do {
+            free(word);
+            word = NULL;
+            char ch;
+            read(server, &ch, 1);
+            printf("%d: ", ch + 1);
+            read(server, &ch, 1);
+            int w_size = 1;
+            for ( ; ch != 0; w_size++) {
+                word = realloc(word, sizeof(char) * w_size);
+                word[w_size - 1] = ch;
+                read(server, &ch, 1);
+            }
+            puts(word);
+        } while (1);
+    }
+    waitpid(pid[0], 0, 0);
+    waitpid(pid[1], 0, 0);
     close(server);
     return OK;
 }
