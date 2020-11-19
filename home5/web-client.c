@@ -82,6 +82,7 @@ int main(int argc, char **argv) {
             write(server, "mymath.info\0", 12);
             free(word);
     }
+    write(server, "quit\0", 5);
     free(word);
     close(server);
     return OK;

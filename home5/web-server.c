@@ -55,22 +55,21 @@ int init_socket(int port) {
     return server_socket;
 }
 
-char *get_word(int *w_size, int client_socket) {
+char *get_word(int client_socket) {
     char *word = NULL;
     char ch;
     int size = 0;
-    for(read(client_socket, &ch, 1); ch != 0; read(client_socket, &ch, 1)) {
+    for(read(client_socket, &ch, 1); ch != '\0'; read(client_socket, &ch, 1)) {
         size++;
-        word = realloc(word, sizeof(char) * (size));
+        word = realloc(word, sizeof(char) * (size + 1));
         word[size - 1] = ch;
     }
-    if (w_size)
-        *w_size = size;
+    word[size] = '\0';
     return word;
 }
 
 int telnet(char *word) {
-    int fd = open(word, O_WRONLY, 0);
+    int fd = open(word, O_RDONLY, 0);
     if (fd > -1) {
         printf("HTTP/1.1 200\n");
         int content_type;
@@ -113,31 +112,33 @@ int main(int argc, char** argv) {
     printf("connected: %s %d\n", inet_ntoa(client_address.sin_addr),
                             ntohs(client_address.sin_port));
     char *word = NULL;
+    char *cont = NULL;
     while(1) {
         free(word);
         char ch;
         int size;
-        char *cont;
 
-        cont = get_word(0, client_socket);
-        printf("%s\n", cont);
+        cont = get_word(client_socket);
+        if (!strcmp(cont, "quit"))
+            break;
         if (strcmp(cont, "GET"))
             perror("Incorrect query 1");
+
         free(cont);
 
-        word = get_word(&size, client_socket);
+        word = get_word(client_socket);
 
-        cont = get_word(0, client_socket);
+        cont = get_word(client_socket);
         if (strcmp(cont, "HTTP/1.1"))
             perror("Incorrect query 2");
         free(cont);
 
-        cont = get_word(0, client_socket);
+        cont = get_word(client_socket);
         if (strcmp(cont, "Host:"))
             perror("Incorrect query 3");
         free(cont);
 
-        cont = get_word(0, client_socket);
+        cont = get_word(client_socket);
         if (strcmp(cont, "mymath.info"))
             perror("Incorrect query 4");
         free(cont);
@@ -145,6 +146,7 @@ int main(int argc, char** argv) {
         printf("%s\n", word);
         telnet(word);
     }
+    free(cont);
     close(client_socket);
     return OK;
 }
