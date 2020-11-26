@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     int server_socket = init_socket(port);
     puts("Wait for connection");
     struct sockaddr_in client_address;
-    socklen_t size;
+    socklen_t size = sizeof client_address;
     int *client_socket = malloc(client_numb * sizeof(int));
     for (int i = 0; i < client_numb; i++) {
         client_socket[i] = accept(server_socket,
@@ -77,12 +77,15 @@ int main(int argc, char** argv) {
                                 ntohs(client_address.sin_port));
     }
     char ch;
+    int ret_val;
     pid_t *pid = malloc(client_numb * sizeof(pid_t));
     for (int i = 0; i < client_numb; i++) {
         pid[i] = fork();
         if (pid[i] == 0) {
             while (ch != '.') {
-                read(client_socket[i], &ch, 1);
+                ret_val = read(client_socket[i], &ch, 1);
+                if (ret_val <= 0)
+                    break;
                 printf("%d: ", i + 1);
                 putchar(ch);
                 puts("");

@@ -71,10 +71,13 @@ int main(int argc, char **argv) {
     int server = init_socket(ip, port);
     char *word;
     int size_w;
+    int ret_val;
     for (word = get_word(&size_w);
         strcmp(word, "exit") && strcmp(word, "quit");
         word = get_word(&size_w)) {
-            write(server, word, size_w);
+            ret_val = write(server, word, size_w);
+            if (ret_val <= 0)
+                break;
             printf("Send word: ");
             puts(word);
     }

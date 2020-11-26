@@ -71,29 +71,43 @@ int main(int argc, char **argv) {
     int port = atoi(argv[2]);
     int server = init_socket(ip, port);
     pid_t pid[2];
+    int ret_val = 0;
     pid[0] = fork();
+    pid[1] = fork();
     if (pid[0] == 0) {
-        char *word;
+        char *word = NULL;
         int size_w;
         // for (word = get_word(&size_w);
         // strcmp(word, "exit") && strcmp(word, "quit");
         // word = get_word(&size_w))
         while (1) {
-                word = get_word(&size_w);
-                write(server, word, size_w);
-                // printf("Send word: ");
-                // puts(word);
-                free(word);
+            free(word);
+            word = get_word(&size_w);
+            ret_val = write(server, word, size_w);
+            if (!strcmp(word, "exit")) {
+                close(server);
+                close(server);
+                break;
+            }
+            if (ret_val <= 0) {
+                close(server);
+                close(server);
+                break;
+            }
+            // printf("Send word: ");
+            // puts(word);
         }
+        exit(0);
     }
-    pid[1] = fork();
     if (pid[1] == 0) {
         char *word = NULL;
         do {
             free(word);
             word = NULL;
             char ch;
-            read(server, &ch, 1);
+            ret_val = read(server, &ch, 1);
+            if (ret_val <= 0)
+                break;
             printf("%d: ", ch + 1);
             read(server, &ch, 1);
             int w_size = 1;
@@ -104,6 +118,7 @@ int main(int argc, char **argv) {
             }
             puts(word);
         } while (1);
+        exit(0);
     }
     waitpid(pid[0], 0, 0);
     waitpid(pid[1], 0, 0);
