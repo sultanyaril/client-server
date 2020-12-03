@@ -68,25 +68,34 @@ char *get_word(int client_socket) {
     return word;
 }
 
-int telnet(char *word) {
+int telnet(char *word, int client_socket) {
     int fd = open(word, O_RDONLY, 0);
     if (fd > -1) {
-        printf("HTTP/1.1 200\n");
+        char cont1[] = "HTTP/1.1 200\ncontent-type: ";
+        write(client_socket, cont1, strlen(cont1));
         int content_type;
         int type_ind = 0;
         for (; word[type_ind] != '.'; type_ind++);
-        printf("content-type: %s/text\n", &(word[type_ind + 1]));
+        write(client_socket, &(word[type_ind]), strlen(&(word[type_ind])));
+        printf("%s/text\n", &(word[type_ind + 1]));
         
         struct stat stats;
         if (stat(word, &stats) != 0)
             perror("stat error");
-        printf("content-size: %ld\n", stats.st_size);
+        char cont2[] = "/text\ncontent-size: ";
+        write(client_socket, cont2, strlen(cont2));
+        char str_size[15];
+        sprintf(str_size, "%ld", stats.st_size);
+        write(client_socket, str_size, strlen(str_size));
+        write(client_socket, "\n", 2);
         char *buff = malloc(sizeof(char) * stats.st_size);
         read(fd, buff, stats.st_size);
-        printf("%s", buff);
-        write(1, buff, stats.st_size);
+        write(client_socket, buff, stats.st_size);
+        free(buff);
+        write(client_socket, "\n", 1);
     } else {
-        printf("HTTP/1.1 404\n");
+        char msg[] = "HTTP/1.1 404\n";
+        write(client_socket, msg, strlen(msg));
     }
     close(fd);
     puts("\n");
@@ -144,7 +153,7 @@ int main(int argc, char** argv) {
         free(cont);
 
         printf("%s\n", word);
-        telnet(word);
+        telnet(word, client_socket);
     }
     free(cont);
     close(client_socket);
