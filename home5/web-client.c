@@ -26,8 +26,12 @@ char *get_word(int *size) {
         answ[cnt - 1] = c;
         c = getchar();
     }
-    answ[cnt] = '\0';
-    *size = cnt + 1;
+    if (answ) {
+        answ[cnt] = '\0';
+        *size = cnt + 1;
+    } else {
+        return get_word(size);
+    }
     return answ;
 }
 

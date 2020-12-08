@@ -64,7 +64,10 @@ char *get_word(int client_socket) {
         word = realloc(word, sizeof(char) * (size + 1));
         word[size - 1] = ch;
     }
-    word[size] = '\0';
+    if (word)
+        word[size] = '\0';
+    else
+        return get_word(client_socket);
     return word;
 }
 
